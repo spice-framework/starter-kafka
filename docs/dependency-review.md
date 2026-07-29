@@ -14,16 +14,16 @@
 - Cancellation: ping, synchronous publish, and shutdown flush use caller-owned
   contexts. Spice sets finite dial and request-overhead defaults and bounds
   every configured timeout.
-- Observability: franz-go has neutral hooks. The first Spice slice exposes
-  payload-free synchronous publication observations and leaves broader
-  OpenTelemetry hook installation caller-owned.
+- Observability: franz-go has neutral hooks. Spice exposes payload-free
+  synchronous publication and consumer-delivery observations and leaves
+  broader OpenTelemetry hook installation caller-owned.
 - Configuration: `Open` performs no network I/O, fixes all-ISR acknowledgement,
   retains franz-go's idempotent producer, disables linger for synchronous
   behavior, bounds batches, and returns exact lifecycle cleanup.
-- Integration: unit tests use the narrow client seam to prove records,
-  cancellation, observation, flush, and idempotent close. A pinned real-broker
-  producer/consumer workflow is required before adding consumer-group
-  generation or classifying Kafka as available.
+- Integration: unit tests use narrow client seams to prove records,
+  cancellation, observation, flush, idempotent close, bounded group polling,
+  and acknowledge/retry/reject commit behavior. A pinned real-broker workflow
+  remains required before classifying Kafka as available.
 
 Primary references:
 
