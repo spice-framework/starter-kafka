@@ -15,12 +15,21 @@ func Manifest() spicestarter.Manifest {
 		Review:    "docs/dependency-reviews/franz-go.md",
 		Activation: spicestarter.Activation{
 			Mode: spicestarter.ActivationExplicitConstructor,
-			EntryPoints: []spicestarter.EntryPoint{{
-				Package: "github.com/StevenBuglione/spice/starter/kafka",
-				Symbol:  "Open",
-			}},
+			EntryPoints: []spicestarter.EntryPoint{
+				{
+					Package: "github.com/StevenBuglione/spice/starter/kafka",
+					Symbol:  "Open",
+				},
+				{
+					Package: "github.com/StevenBuglione/spice/starter/kafka",
+					Symbol:  "OpenConsumer",
+				},
+			},
 		},
-		Capabilities: []string{"messaging.kafka.producer"},
+		Capabilities: []string{
+			"messaging.kafka.consumer-group",
+			"messaging.kafka.producer",
+		},
 		Dependencies: []spicestarter.Dependency{{
 			Module:  "github.com/twmb/franz-go",
 			Version: "v1.21.0",

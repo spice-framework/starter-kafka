@@ -253,7 +253,10 @@ func TestManifest(t *testing.T) {
 	if spec.ID != "github.com/StevenBuglione/spice/starter/kafka" ||
 		!slices.Equal(
 			spec.Capabilities,
-			[]string{"messaging.kafka.producer"},
+			[]string{
+				"messaging.kafka.consumer-group",
+				"messaging.kafka.producer",
+			},
 		) ||
 		len(spec.Dependencies) != 1 ||
 		spec.Dependencies[0].Version != "v1.21.0" {
