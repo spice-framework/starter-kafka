@@ -1,14 +1,14 @@
 package kafka
 
-import spicestarter "github.com/StevenBuglione/spice/starter"
+import spicestarter "github.com/spice-framework/spice/starter"
 
 // Manifest returns Kafka starter compatibility and review metadata.
 func Manifest() spicestarter.Manifest {
 	return spicestarter.Must(spicestarter.Spec{
 		Schema:    spicestarter.Schema,
-		ID:        "github.com/StevenBuglione/spice/starter/kafka",
+		ID:        "github.com/spice-framework/spice/starter/kafka",
 		Version:   "0.1.0-dev",
-		Module:    "github.com/StevenBuglione/spice",
+		Module:    "github.com/spice-framework/spice",
 		SpiceAPI:  spicestarter.APIVersion,
 		MinimumGo: "1.26",
 		License:   "Apache-2.0",
@@ -17,11 +17,11 @@ func Manifest() spicestarter.Manifest {
 			Mode: spicestarter.ActivationExplicitConstructor,
 			EntryPoints: []spicestarter.EntryPoint{
 				{
-					Package: "github.com/StevenBuglione/spice/starter/kafka",
+					Package: "github.com/spice-framework/spice/starter/kafka",
 					Symbol:  "Open",
 				},
 				{
-					Package: "github.com/StevenBuglione/spice/starter/kafka",
+					Package: "github.com/spice-framework/spice/starter/kafka",
 					Symbol:  "OpenConsumer",
 				},
 			},

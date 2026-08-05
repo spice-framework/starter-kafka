@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StevenBuglione/spice/messaging"
+	"github.com/spice-framework/spice/messaging"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
@@ -250,7 +250,7 @@ func TestPublisherRejectsInvalidUse(t *testing.T) {
 func TestManifest(t *testing.T) {
 	t.Parallel()
 	spec := Manifest().Spec()
-	if spec.ID != "github.com/StevenBuglione/spice/starter/kafka" ||
+	if spec.ID != "github.com/spice-framework/spice/starter/kafka" ||
 		!slices.Equal(
 			spec.Capabilities,
 			[]string{

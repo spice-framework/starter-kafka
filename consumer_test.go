@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StevenBuglione/spice/messaging"
+	"github.com/spice-framework/spice/messaging"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 

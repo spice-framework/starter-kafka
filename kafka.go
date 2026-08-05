@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StevenBuglione/spice/lifecycle"
-	"github.com/StevenBuglione/spice/messaging"
+	"github.com/spice-framework/spice/lifecycle"
+	"github.com/spice-framework/spice/messaging"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/plain"
 )
