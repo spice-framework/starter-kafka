@@ -87,10 +87,17 @@ make compatibility
 make lint
 make security
 make verify
+make verify-release
 ```
 
 See [`docs/dependency-review.md`](docs/dependency-review.md) and
 [`docs/support.md`](docs/support.md).
+
+## Releases
+
+The repository builds deterministic source-only releases with an SPDX 2.3
+SBOM, SHA-256 checksums, and Ed25519 signatures. See the exact artifact and
+clean-tag ceremony in [`docs/releasing.md`](docs/releasing.md).
 
 ## License
 
