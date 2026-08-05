@@ -19,6 +19,7 @@ import (
 	"github.com/spice-framework/spice/messaging"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/plain"
+	"github.com/twmb/franz-go/pkg/sasl/scram"
 )
 
 const (
@@ -38,6 +39,20 @@ var reservedHeaders = []string{
 	"spice-occurred-at",
 }
 
+// SASLMechanism selects the explicit username/password authentication
+// exchange used with Kafka brokers.
+type SASLMechanism uint8
+
+const (
+	// SASLPlain uses the PLAIN exchange and therefore requires the default TLS
+	// policy outside explicitly insecure local development.
+	SASLPlain SASLMechanism = iota
+	// SASLSCRAMSHA256 uses SCRAM-SHA-256 challenge-response authentication.
+	SASLSCRAMSHA256
+	// SASLSCRAMSHA512 uses SCRAM-SHA-512 challenge-response authentication.
+	SASLSCRAMSHA512
+)
+
 // Config defines one explicit Kafka producer. TLS and authentication are
 // required by default; local development must opt out of each independently.
 type Config struct {
@@ -45,6 +60,7 @@ type Config struct {
 	ClientID             string
 	Username             string
 	Password             string
+	SASLMechanism        SASLMechanism
 	TLSConfig            *tls.Config
 	DialTimeout          time.Duration
 	RequestTimeout       time.Duration
@@ -231,10 +247,18 @@ func clientOptions(config Config) ([]kgo.Opt, error) {
 		)
 	}
 	if normalized.Username != "" {
-		options = append(options, kgo.SASL(plain.Auth{
-			User: normalized.Username,
-			Pass: normalized.Password,
-		}.AsMechanism()))
+		auth := scram.Auth{User: normalized.Username, Pass: normalized.Password}
+		switch normalized.SASLMechanism {
+		case SASLPlain:
+			options = append(options, kgo.SASL(plain.Auth{
+				User: normalized.Username,
+				Pass: normalized.Password,
+			}.AsMechanism()))
+		case SASLSCRAMSHA256:
+			options = append(options, kgo.SASL(auth.AsSha256Mechanism()))
+		case SASLSCRAMSHA512:
+			options = append(options, kgo.SASL(auth.AsSha512Mechanism()))
+		}
 	}
 	return options, nil
 }
@@ -336,6 +360,11 @@ func validateBroker(broker string) error {
 }
 
 func validateAuthentication(config Config) error {
+	if config.SASLMechanism > SASLSCRAMSHA512 {
+		return errors.New(
+			"construct Kafka producer: authentication mechanism is unsupported",
+		)
+	}
 	if (config.Username == "") != (config.Password == "") {
 		return errors.New(
 			"construct Kafka producer: username and password must be supplied together",

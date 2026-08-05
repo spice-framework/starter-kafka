@@ -137,6 +137,41 @@ func TestConsumerRunLeavesRetryUncommitted(t *testing.T) {
 	}
 }
 
+func TestRecordSettlementCommitsAcknowledgeAndRejectOnly(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		disposition messaging.Disposition
+		wantCommits int
+	}{
+		{disposition: messaging.DispositionAcknowledge, wantCommits: 1},
+		{disposition: messaging.DispositionReject, wantCommits: 1},
+		{disposition: messaging.DispositionRetry, wantCommits: 0},
+	} {
+		client := &fakeConsumer{}
+		settlement := recordSettlement{
+			client:  client,
+			record:  testKafkaRecord(t),
+			timeout: time.Second,
+		}
+		if err := settlement.Settle(
+			context.Background(),
+			test.disposition,
+			errors.New("payload-free cause"),
+		); err != nil {
+			t.Fatalf("Settle(%s): %v", test.disposition, err)
+		}
+		if len(client.commits) != test.wantCommits {
+			t.Fatalf(
+				"Settle(%s) commits = %d, want %d",
+				test.disposition,
+				len(client.commits),
+				test.wantCommits,
+			)
+		}
+	}
+}
+
 func TestConsumerRunReportsCommitFailure(t *testing.T) {
 	t.Parallel()
 	commitFailure := errors.New("commit unavailable")

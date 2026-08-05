@@ -279,6 +279,7 @@ func consumerOptions(
 		options,
 		kgo.ConsumerGroup(config.GroupID),
 		kgo.ConsumeTopics(config.Topics...),
+		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
 		kgo.DisableAutoCommit(),
 		kgo.FetchMaxBytes(defaultBatchMaxBytes),
 	)

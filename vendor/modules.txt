@@ -1,0 +1,43 @@
+# github.com/klauspost/compress v1.18.7
+## explicit; go 1.24
+github.com/klauspost/compress
+github.com/klauspost/compress/fse
+github.com/klauspost/compress/huff0
+github.com/klauspost/compress/internal/cpuinfo
+github.com/klauspost/compress/internal/le
+github.com/klauspost/compress/internal/race
+github.com/klauspost/compress/internal/snapref
+github.com/klauspost/compress/s2
+github.com/klauspost/compress/zstd
+github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/pierrec/lz4/v4 v4.1.26
+## explicit; go 1.17
+github.com/pierrec/lz4/v4
+github.com/pierrec/lz4/v4/internal/lz4block
+github.com/pierrec/lz4/v4/internal/lz4errors
+github.com/pierrec/lz4/v4/internal/lz4stream
+github.com/pierrec/lz4/v4/internal/xxh32
+# github.com/spice-framework/spice v0.0.0-20260805175412-383c17744300
+## explicit; go 1.26.0
+github.com/spice-framework/spice/annotation
+github.com/spice-framework/spice/annotation/sdk/starter
+github.com/spice-framework/spice/lifecycle
+github.com/spice-framework/spice/messaging
+# github.com/twmb/franz-go v1.21.0
+## explicit; go 1.25.0
+github.com/twmb/franz-go/pkg/kbin
+github.com/twmb/franz-go/pkg/kerr
+github.com/twmb/franz-go/pkg/kgo
+github.com/twmb/franz-go/pkg/kgo/internal/sticky
+github.com/twmb/franz-go/pkg/kgo/internal/xsync
+github.com/twmb/franz-go/pkg/kversion
+github.com/twmb/franz-go/pkg/sasl
+github.com/twmb/franz-go/pkg/sasl/plain
+github.com/twmb/franz-go/pkg/sasl/scram
+# github.com/twmb/franz-go/pkg/kmsg v1.13.1
+## explicit; go 1.24.0
+github.com/twmb/franz-go/pkg/kmsg
+github.com/twmb/franz-go/pkg/kmsg/internal/kbin
+# golang.org/x/crypto v0.50.0
+## explicit; go 1.25.0
+golang.org/x/crypto/pbkdf2

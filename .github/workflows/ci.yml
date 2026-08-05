@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: spice-framework/.github/.github/workflows/go-verify.yml@130369b5162d2ae38084485f6639e75f2b6e382f
+    with:
+      go-version: 1.26.5
+
+  quality:
+    name: Repository quality contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Set up exact Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - name: Run complete local quality contract
+        run: go run ./internal/qualitygate -mode=verify
+
+  core-compatibility:
+    name: Spice core (${{ matrix.line }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        line: [minimum, current]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up exact Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: go.sum
+      - name: Verify the ${{ matrix.line }} core line
+        run: go run ./internal/qualitygate -mode=compatibility -line=${{ matrix.line }}
+
+  broker-acceptance:
+    name: Redpanda SCRAM broker acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up exact Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: go.sum
+      - name: Start immutable authenticated Redpanda broker
+        run: >-
+          docker run --detach --name spice-redpanda
+          --publish 19092:19092
+          --env RP_BOOTSTRAP_USER=spice:integration-secret:SCRAM-SHA-256
+          docker.redpanda.com/redpandadata/redpanda@sha256:8f7e9e4c1422baaa1a5e2a6c6c668cfe05442cb3cb476542c7dff61725e6fe31
+          redpanda start --mode dev-container --smp 1
+          --kafka-addr external://0.0.0.0:19092
+          --advertise-kafka-addr external://127.0.0.1:19092
+          --set redpanda.enable_sasl=true
+          --set 'redpanda.superusers=[spice]'
+      - name: Wait for authenticated Kafka API
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            if docker exec spice-redpanda rpk cluster info \
+              -X brokers=127.0.0.1:19092 \
+              -X user=spice \
+              -X pass=integration-secret \
+              -X sasl.mechanism=SCRAM-SHA-256 >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs spice-redpanda
+          exit 1
+      - name: Prove authenticated producer and consumer workflow
+        env:
+          SPICE_KAFKA_BROKER: 127.0.0.1:19092
+          SPICE_KAFKA_USERNAME: spice
+          SPICE_KAFKA_PASSWORD: integration-secret
+        run: |
+          docker exec spice-redpanda rpk topic create spice.acceptance \
+            --partitions 1 --replicas 1 \
+            -X brokers=127.0.0.1:19092 \
+            -X user=spice \
+            -X pass=integration-secret \
+            -X sasl.mechanism=SCRAM-SHA-256
+          go test -tags=integration -count=1 -timeout=2m ./integration/...
+      - name: Preserve broker diagnostics
+        if: always()
+        run: docker logs spice-redpanda
+      - name: Stop broker
+        if: always()
+        run: docker rm --force spice-redpanda

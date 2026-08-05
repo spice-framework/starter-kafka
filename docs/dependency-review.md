@@ -1,6 +1,7 @@
 # Dependency review: franz-go
 
-- Decision: approved for the isolated `starter/kafka` package.
+- Decision: approved for the standalone
+  `github.com/spice-framework/starter-kafka` module.
 - Version: `github.com/twmb/franz-go` v1.21.0.
 - Upstream: <https://github.com/twmb/franz-go>.
 - License: BSD-3-Clause; retained in the vendored module license.
@@ -10,7 +11,8 @@
 - Security: verified TLS 1.2 or newer and authentication are independent
   defaults. Plaintext and unauthenticated local development each require an
   explicit opt-out. Broker addresses are exact bounded `host:port` values;
-  credentials and payloads never enter errors or observations.
+  credentials and payloads never enter starter-produced errors or interaction
+  metadata. PLAIN and SCRAM mechanisms are explicit.
 - Cancellation: ping, synchronous publish, and shutdown flush use caller-owned
   contexts. Spice sets finite dial and request-overhead defaults and bounds
   every configured timeout.
@@ -22,8 +24,10 @@
   behavior, bounds batches, and returns exact lifecycle cleanup.
 - Integration: unit tests use narrow client seams to prove records,
   cancellation, observation, flush, idempotent close, bounded group polling,
-  and acknowledge/retry/reject commit behavior. A pinned real-broker workflow
-  remains required before classifying Kafka as available.
+  and acknowledge/retry/reject commit behavior. A pinned Redpanda real-broker
+  workflow proves SCRAM authentication, publish/consume ordering, commits,
+  restart behavior, and cleanup. Target production broker/TLS configurations
+  still require their own acceptance.
 
 Primary references:
 

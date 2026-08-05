@@ -68,6 +68,9 @@ func TestNormalizeConfigRejectsUnsafeValues(t *testing.T) {
 		{name: "partial credentials", mutate: func(config *Config) {
 			config.Username = "service"
 		}},
+		{name: "unsupported authentication mechanism", mutate: func(config *Config) {
+			config.SASLMechanism = 99
+		}},
 		{name: "unauthenticated", mutate: func(config *Config) {
 			config.AllowUnauthenticated = false
 		}},
@@ -102,6 +105,33 @@ func TestNormalizeConfigRejectsUnsafeValues(t *testing.T) {
 				t.Fatal("normalizeConfig() error = nil")
 			}
 		})
+	}
+}
+
+func TestOpenSupportsExplicitSASLMechanismsWithoutNetworkIO(t *testing.T) {
+	t.Parallel()
+
+	for _, mechanism := range []SASLMechanism{
+		SASLPlain,
+		SASLSCRAMSHA256,
+		SASLSCRAMSHA512,
+	} {
+		publisher, cleanup, err := Open(Config{
+			Brokers:       []string{"broker.invalid:9092"},
+			Username:      "service",
+			Password:      "secret",
+			SASLMechanism: mechanism,
+			AllowInsecure: true,
+		})
+		if err != nil {
+			t.Fatalf("Open(mechanism %d): %v", mechanism, err)
+		}
+		if publisher == nil || cleanup == nil {
+			t.Fatalf("Open(mechanism %d) returned nil ownership", mechanism)
+		}
+		if err := cleanup(context.Background()); err != nil {
+			t.Fatalf("cleanup(mechanism %d): %v", mechanism, err)
+		}
 	}
 }
 
@@ -250,7 +280,7 @@ func TestPublisherRejectsInvalidUse(t *testing.T) {
 func TestManifest(t *testing.T) {
 	t.Parallel()
 	spec := Manifest().Spec()
-	if spec.ID != "github.com/spice-framework/spice/starter/kafka" ||
+	if spec.ID != "github.com/spice-framework/starter-kafka" ||
 		!slices.Equal(
 			spec.Capabilities,
 			[]string{
