@@ -9,16 +9,18 @@ Git-tracked source tree and the committed `go.mod`, `go.sum`, and
 
 For `v0.1.0`, a production build creates exactly:
 
-- `starter-kafka_0.1.0_source.tar.gz`, containing every Git-tracked file under
-  the single `starter-kafka-0.1.0/` prefix;
+- `starter-kafka_0.1.0_source.tar.gz`, containing every file in the exact
+  committed `HEAD` tree under the single `starter-kafka-0.1.0/` prefix;
 - `starter-kafka_0.1.0_sbom.spdx.json`, an SPDX 2.3 document for the root
   module and every exact module in the committed vendor graph;
 - `checksums.txt`, with SHA-256 hashes for the source archive and SBOM;
 - `checksums.txt.sig`, a raw Ed25519 signature over the exact checksum file;
 - `checksums.txt.pem`, the matching public key.
 
-Archive ordering, paths, modes, tar/PAX headers, gzip headers, and SPDX creation
-time are derived only from sorted tracked paths and the source commit epoch.
+Archive ordering, paths, executable modes, safe relative symlinks, tar/PAX
+headers, gzip headers, and SPDX creation time are derived only from sorted
+`HEAD` tree objects and the source commit epoch. Gitlinks, unsafe paths, and
+symlinks that escape the archive root fail closed.
 Generated metadata contains no current time or absolute workspace path. The
 builder performs no dependency resolution or network access. It refuses stale
 vendor metadata, unsafe tracked paths, an existing output directory, or partial
@@ -36,6 +38,9 @@ artifact that could be confused with a production release:
 ```text
 go run ./cmd/starter-kafka-release -rehearsal -version v0.1.0-rc.1 -output dist-rehearsal
 ```
+
+Even in a dirty rehearsal, the source archive contains committed `HEAD` bytes,
+not uncommitted worktree or index content.
 
 ## Signing and verification
 

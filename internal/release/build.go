@@ -2,6 +2,7 @@
 package release
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -15,11 +16,23 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const maxGitDiagnosticBytes = 32 << 10
+
+const (
+	maxSourceTreeBytes = 16 << 20
+	maxSourceBlobBytes = 64 << 20
+)
+
+type gitTreeEntry struct {
+	mode string
+	hash string
+	name string
+}
 
 var canonicalSemver = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`)
 
@@ -187,9 +200,139 @@ func sourceEntries(ctx context.Context, root, version string) ([]archiveEntry, e
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("list release sources: %w", err)
 	}
-	// Git is only the committed source index here; archive construction remains
-	// repository-owned and never delegates dependency or artifact resolution.
-	command := exec.CommandContext(ctx, "git", "ls-files", "-z") // #nosec G204 -- fixed executable and arguments.
+	// Git supplies exact committed tree identity and blob bytes. Archive
+	// construction, validation, timestamps, and artifact ownership remain here.
+	tree, err := gitBytes(ctx, root, "ls-tree", "-rz", "--full-tree", "HEAD")
+	if err != nil {
+		return nil, fmt.Errorf("list release sources: %w", err)
+	}
+	treeEntries, err := parseGitTree(tree)
+	if err != nil {
+		return nil, err
+	}
+	blobs, err := gitBlobs(ctx, root, treeEntries)
+	if err != nil {
+		return nil, err
+	}
+	prefix := "starter-kafka-" + strings.TrimPrefix(version, "v")
+	entries := make([]archiveEntry, 0, len(treeEntries))
+	for index, treeEntry := range treeEntries {
+		entry, err := makeArchiveEntry(prefix, treeEntry, blobs[index])
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	slices.SortFunc(entries, func(left, right archiveEntry) int { return strings.Compare(left.name, right.name) })
+	return entries, nil
+}
+
+func parseGitTree(tree []byte) ([]gitTreeEntry, error) {
+	if len(tree) > maxSourceTreeBytes {
+		return nil, fmt.Errorf("list release sources: tree exceeds %d bytes", maxSourceTreeBytes)
+	}
+	records := bytes.Split(bytes.TrimSuffix(tree, []byte{0}), []byte{0})
+	if len(records) == 1 && len(records[0]) == 0 {
+		return nil, fmt.Errorf("list release sources: repository has no tracked files")
+	}
+	entries := make([]gitTreeEntry, 0, len(records))
+	for _, record := range records {
+		metadata, name, found := bytes.Cut(record, []byte{'\t'})
+		fields := strings.Fields(string(metadata))
+		if !found || len(fields) != 3 || fields[1] != "blob" {
+			return nil, fmt.Errorf("list release sources: unsupported tree entry %q", record)
+		}
+		entries = append(entries, gitTreeEntry{mode: fields[0], hash: fields[2], name: string(name)})
+	}
+	slices.SortFunc(entries, func(left, right gitTreeEntry) int { return strings.Compare(left.name, right.name) })
+	return entries, nil
+}
+
+func makeArchiveEntry(prefix string, treeEntry gitTreeEntry, data []byte) (archiveEntry, error) {
+	clean := path.Clean(filepath.ToSlash(treeEntry.name))
+	if clean == "." || clean != filepath.ToSlash(treeEntry.name) || path.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, "../") {
+		return archiveEntry{}, fmt.Errorf("list release sources: unsafe tracked path %q", treeEntry.name)
+	}
+	entry := archiveEntry{name: prefix + "/" + clean, data: data}
+	switch treeEntry.mode {
+	case "100644":
+		entry.mode = 0o644
+	case "100755":
+		entry.mode = 0o755
+	case "120000":
+		entry.mode = 0o777
+		entry.linkname = string(data)
+		entry.data = nil
+		if err := validateSymlink(clean, entry.linkname); err != nil {
+			return archiveEntry{}, err
+		}
+	default:
+		return archiveEntry{}, fmt.Errorf("list release sources: unsupported Git mode %q for %q", treeEntry.mode, clean)
+	}
+	return entry, nil
+}
+
+func gitBlobs(ctx context.Context, root string, entries []gitTreeEntry) ([][]byte, error) {
+	var input strings.Builder
+	for _, entry := range entries {
+		input.WriteString(entry.hash)
+		input.WriteByte('\n')
+	}
+	command := exec.CommandContext(ctx, "git", "cat-file", "--batch") // #nosec G204 -- fixed executable and arguments.
+	command.Dir = root
+	command.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0")
+	command.Stdin = strings.NewReader(input.String())
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		return nil, fmt.Errorf("read committed release sources: %w: %s", err, boundedText(stderr.Bytes()))
+	}
+	reader := bufio.NewReader(bytes.NewReader(stdout.Bytes()))
+	result := make([][]byte, 0, len(entries))
+	for _, entry := range entries {
+		header, err := reader.ReadString('\n')
+		if err != nil {
+			return nil, fmt.Errorf("read committed release source %q header: %w", entry.name, err)
+		}
+		fields := strings.Fields(header)
+		if len(fields) != 3 || fields[0] != entry.hash || fields[1] != "blob" {
+			return nil, fmt.Errorf("read committed release source %q: invalid object header %q", entry.name, strings.TrimSpace(header))
+		}
+		size, err := strconv.ParseInt(fields[2], 10, 64)
+		if err != nil || size < 0 || size > maxSourceBlobBytes {
+			return nil, fmt.Errorf("read committed release source %q: invalid blob size %q", entry.name, fields[2])
+		}
+		data := make([]byte, size)
+		if _, readErr := io.ReadFull(reader, data); readErr != nil {
+			return nil, fmt.Errorf("read committed release source %q content: %w", entry.name, readErr)
+		}
+		terminator, err := reader.ReadByte()
+		if err != nil || terminator != '\n' {
+			return nil, fmt.Errorf("read committed release source %q: invalid object terminator", entry.name)
+		}
+		result = append(result, data)
+	}
+	if _, err := reader.ReadByte(); !errors.Is(err, io.EOF) {
+		return nil, fmt.Errorf("read committed release sources: unexpected trailing output")
+	}
+	return result, nil
+}
+
+func validateSymlink(name, target string) error {
+	if target == "" || path.IsAbs(target) || strings.Contains(target, "\\") {
+		return fmt.Errorf("list release sources: unsafe symlink %q -> %q", name, target)
+	}
+	resolved := path.Clean(path.Join(path.Dir(name), target))
+	if resolved == ".." || strings.HasPrefix(resolved, "../") {
+		return fmt.Errorf("list release sources: symlink %q escapes archive root", name)
+	}
+	return nil
+}
+
+func gitBytes(ctx context.Context, root string, arguments ...string) ([]byte, error) {
+	command := exec.CommandContext(ctx, "git", arguments...) // #nosec G204 -- fixed executable and validated object arguments; no shell.
 	command.Dir = root
 	command.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0")
 	var stdout bytes.Buffer
@@ -197,27 +340,9 @@ func sourceEntries(ctx context.Context, root, version string) ([]archiveEntry, e
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 	if err := command.Run(); err != nil {
-		return nil, fmt.Errorf("list release sources: %w: %s", err, boundedText(stderr.Bytes()))
+		return nil, fmt.Errorf("git %s: %w: %s", strings.Join(arguments, " "), err, boundedText(stderr.Bytes()))
 	}
-	names := strings.Split(strings.TrimSuffix(stdout.String(), "\x00"), "\x00")
-	if len(names) == 1 && names[0] == "" {
-		return nil, fmt.Errorf("list release sources: repository has no tracked files")
-	}
-	slices.Sort(names)
-	prefix := "starter-kafka-" + strings.TrimPrefix(version, "v")
-	entries := make([]archiveEntry, 0, len(names))
-	for _, name := range names {
-		clean := path.Clean(filepath.ToSlash(name))
-		if clean == "." || clean != filepath.ToSlash(name) || path.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, "../") {
-			return nil, fmt.Errorf("list release sources: unsafe tracked path %q", name)
-		}
-		data, err := readScopedFile(root, clean)
-		if err != nil {
-			return nil, fmt.Errorf("read tracked release source %q: %w", clean, err)
-		}
-		entries = append(entries, archiveEntry{name: prefix + "/" + clean, data: data})
-	}
-	return entries, nil
+	return stdout.Bytes(), nil
 }
 
 func artifactChecksums(root string, files []string) ([]byte, error) {

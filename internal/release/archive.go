@@ -13,8 +13,10 @@ import (
 )
 
 type archiveEntry struct {
-	name string
-	data []byte
+	name     string
+	mode     int64
+	data     []byte
+	linkname string
 }
 
 func writeSourceArchive(filename string, epoch time.Time, entries []archiveEntry) error {
@@ -40,21 +42,30 @@ func writeTarGzip(output io.Writer, epoch time.Time, entries []archiveEntry) err
 	gzipWriter.OS = 255
 	tarWriter := tar.NewWriter(gzipWriter)
 	for _, entry := range entries {
+		typeflag := byte(tar.TypeReg)
+		size := int64(len(entry.data))
+		if entry.linkname != "" {
+			typeflag = tar.TypeSymlink
+			size = 0
+		}
 		header := &tar.Header{
 			Name:       path.Clean(entry.name),
-			Mode:       0o644,
-			Size:       int64(len(entry.data)),
+			Mode:       entry.mode,
+			Size:       size,
 			ModTime:    epoch,
 			AccessTime: epoch,
 			ChangeTime: epoch,
-			Typeflag:   tar.TypeReg,
+			Typeflag:   typeflag,
+			Linkname:   entry.linkname,
 			Format:     tar.FormatPAX,
 		}
 		if err := tarWriter.WriteHeader(header); err != nil {
 			return errors.Join(fmt.Errorf("create tar entry %q: %w", entry.name, err), tarWriter.Close(), gzipWriter.Close())
 		}
-		if _, err := tarWriter.Write(entry.data); err != nil {
-			return errors.Join(fmt.Errorf("write tar entry %q: %w", entry.name, err), tarWriter.Close(), gzipWriter.Close())
+		if typeflag == tar.TypeReg {
+			if _, err := tarWriter.Write(entry.data); err != nil {
+				return errors.Join(fmt.Errorf("write tar entry %q: %w", entry.name, err), tarWriter.Close(), gzipWriter.Close())
+			}
 		}
 	}
 	if err := tarWriter.Close(); err != nil {

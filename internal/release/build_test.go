@@ -15,6 +15,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -120,6 +121,69 @@ func TestModuleGraphRejectsVendorDriftAndCancellation(t *testing.T) {
 	cancel()
 	if _, err := listModules(ctx, root); err == nil {
 		t.Fatal("cancelled module read was accepted")
+	}
+}
+
+func TestSourceArchivePreservesCommittedExecutableAndSymlink(t *testing.T) {
+	root := t.TempDir()
+	runReleaseGit(t, root, "init")
+	runReleaseGit(t, root, "config", "user.name", "Spice Test")
+	runReleaseGit(t, root, "config", "user.email", "spice@example.test")
+	writeFixtureFile(t, root, "run.sh", "#!/bin/sh\nexit 0\n")
+	writeFixtureFile(t, root, "link-target", "run.sh")
+	runReleaseGit(t, root, "add", "run.sh")
+	runReleaseGit(t, root, "update-index", "--chmod=+x", "run.sh")
+	linkHash := strings.TrimSpace(runReleaseGit(t, root, "hash-object", "-w", "link-target"))
+	runReleaseGit(t, root, "update-index", "--add", "--cacheinfo", "120000,"+linkHash+",run-link")
+	runReleaseGit(t, root, "commit", "-m", "fixture")
+
+	entries, err := sourceEntries(t.Context(), root, "v0.1.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("source entries = %#v", entries)
+	}
+	byName := make(map[string]archiveEntry, len(entries))
+	for _, entry := range entries {
+		byName[entry.name] = entry
+	}
+	executable := byName["starter-kafka-0.1.0/run.sh"]
+	if executable.mode != 0o755 || string(executable.data) != "#!/bin/sh\nexit 0\n" || executable.linkname != "" {
+		t.Fatalf("executable entry = %#v", executable)
+	}
+	link := byName["starter-kafka-0.1.0/run-link"]
+	if link.mode != 0o777 || link.linkname != "run.sh" || len(link.data) != 0 {
+		t.Fatalf("symlink entry = %#v", link)
+	}
+
+	archivePath := filepath.Join(t.TempDir(), "source.tar.gz")
+	epoch := time.Unix(1_788_000_000, 0).UTC()
+	if err := writeSourceArchive(archivePath, epoch, entries); err != nil {
+		t.Fatal(err)
+	}
+	headers := readArchiveHeaders(t, archivePath)
+	executableHeader, executableFound := headers["starter-kafka-0.1.0/run.sh"]
+	linkHeader, linkFound := headers["starter-kafka-0.1.0/run-link"]
+	if !executableFound || executableHeader == nil || !linkFound || linkHeader == nil {
+		t.Fatalf("archive headers are incomplete: %#v", headers)
+	}
+	if executableHeader.Mode != 0o755 ||
+		linkHeader.Typeflag != tar.TypeSymlink ||
+		linkHeader.Linkname != "run.sh" {
+		t.Fatalf("archive headers = %#v", headers)
+	}
+}
+
+func TestValidateSymlinkRejectsArchiveEscape(t *testing.T) {
+	t.Parallel()
+	for _, target := range []string{"", "/absolute", "../../escape", `..\escape`} {
+		if err := validateSymlink("nested/link", target); err == nil {
+			t.Errorf("validateSymlink(%q) error = nil", target)
+		}
+	}
+	if err := validateSymlink("nested/link", "../safe"); err != nil {
+		t.Fatalf("safe relative symlink rejected: %v", err)
 	}
 }
 
@@ -232,6 +296,41 @@ func verifySBOM(t *testing.T, directory, root string, epoch time.Time) {
 	}
 }
 
+func readArchiveHeaders(t *testing.T, filename string) map[string]*tar.Header {
+	t.Helper()
+	file, err := os.Open(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			t.Errorf("close source archive: %v", closeErr)
+		}
+	}()
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if closeErr := gzipReader.Close(); closeErr != nil {
+			t.Errorf("close gzip reader: %v", closeErr)
+		}
+	}()
+	result := make(map[string]*tar.Header)
+	reader := tar.NewReader(gzipReader)
+	for {
+		header, nextErr := reader.Next()
+		if errors.Is(nextErr, io.EOF) {
+			return result
+		}
+		if nextErr != nil {
+			t.Fatal(nextErr)
+		}
+		headerCopy := *header
+		result[header.Name] = &headerCopy
+	}
+}
+
 func writeFixtureFile(t *testing.T, root, name, content string) {
 	t.Helper()
 	filename := filepath.Join(root, filepath.FromSlash(name))
@@ -250,4 +349,15 @@ func readTestFile(t *testing.T, filename string) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+func runReleaseGit(t *testing.T, root string, arguments ...string) string {
+	t.Helper()
+	command := exec.CommandContext(t.Context(), "git", arguments...)
+	command.Dir = root
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %v: %v: %s", arguments, err, output)
+	}
+	return string(output)
 }

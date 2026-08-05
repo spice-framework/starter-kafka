@@ -53,6 +53,9 @@ jobs:
         run: |
           openssl pkeyutl -verify -pubin -inkey checksums.txt.pem -rawin -in checksums.txt -sigfile checksums.txt.sig
           sha256sum -c checksums.txt
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/starter-kafka-release.key"
       - name: Publish immutable-tag assets
         env:
           GH_TOKEN: ${{ github.token }}
