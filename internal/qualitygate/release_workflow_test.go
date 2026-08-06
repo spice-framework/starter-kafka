@@ -17,7 +17,7 @@ func TestValidateReleaseWorkflow(t *testing.T) {
 			name: "wrong reusable workflow commit",
 			content: strings.Replace(
 				valid,
-				"37dbac1ce9a616574f899afcb531f2097c71855c",
+				"8b9fc5012de2f2e457ff13d3f1168a451da167fe",
 				strings.Repeat("0", 40),
 				1,
 			),
