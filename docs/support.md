@@ -6,6 +6,9 @@
 - The Spice core minimum and current versions in
   `spice-compatibility.json`.
 - Standard module and vendored, offline builds.
+- Release parity through
+  `github.com/spice-framework/development/cmd/spice-dev` at
+  `v0.0.0-20260806034648-1856466df09d`.
 - Kafka-compatible brokers supported by franz-go v1.21.0, subject to
   application-owned acceptance against the exact broker configuration.
 
@@ -27,3 +30,7 @@ replication/min-ISR policy, schema evolution, dead-letter policy, retries,
 backoff, tracing hooks, and operational monitoring. This starter owns secure
 client defaults, bounded synchronous production, sequential consumption,
 manual settlement, lifecycle cleanup, and payload-free interaction metadata.
+
+The pinned central tool renders unsigned rehearsal candidates only. Windows
+and Linux CI compare them with the retained builder under vendor-only offline
+resolution; the retained command remains the signed production authority.

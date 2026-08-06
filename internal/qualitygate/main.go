@@ -42,7 +42,7 @@ func execute() int {
 	mode := flag.String(
 		"mode",
 		"verify",
-		"verification mode: check, compatibility, fmt, lint, security, verify, or verify-release",
+		"verification mode: check, compatibility, fmt, lint, release-parity, security, verify, or verify-release",
 	)
 	compatibilityLine := flag.String("line", "all", "Spice compatibility line: minimum, current, or all")
 	flag.Parse()
@@ -82,6 +82,9 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
+	release := step{"central and retained release parity", func() error {
+		return releaseParity(ctx, root)
+	}}
 	var steps []step
 	switch mode {
 	case "check":
@@ -103,6 +106,8 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 			formatting,
 			{"lint and nil safety", func() error { return lint(ctx, root) }},
 		}
+	case "release-parity":
+		steps = []step{identity, release}
 	case "security":
 		steps = []step{
 			identity,
@@ -125,10 +130,7 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 			{"offline vendor", func() error { return offline(ctx, root) }},
 		}
 	case "verify-release":
-		steps = []step{
-			identity,
-			{"source release contract", func() error { return releaseContract(ctx, root) }},
-		}
+		steps = []step{identity, release}
 	default:
 		return fmt.Errorf("unknown mode %q", mode)
 	}
@@ -141,7 +143,7 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 		output.Printf("<== %s passed in %s", current.name, time.Since(started).Round(time.Millisecond))
 	}
 	output.Print("==> all verification passed")
-	return nil
+	return requireReleaseTool(ctx, root)
 }
 
 func prepareDependencies(ctx context.Context, root string) error {
@@ -726,53 +728,6 @@ func offline(ctx context.Context, root string) error {
 		return err
 	}
 	return command(ctx, root, environment, "go", "build", "-trimpath", "./...")
-}
-
-func releaseContract(ctx context.Context, root string) error {
-	if err := command(ctx, root, nil, "go", "test", "-count=1", "./internal/release", "./cmd/starter-kafka-release"); err != nil {
-		return err
-	}
-	parent, err := os.MkdirTemp("", "starter-kafka-release-contract-*")
-	if err != nil {
-		return fmt.Errorf("create release contract directory: %w", err)
-	}
-	defer removeTree(parent)
-	outputDir := filepath.Join(parent, "dist")
-	if runErr := command(
-		ctx,
-		root,
-		nil,
-		"go",
-		"run",
-		"./cmd/starter-kafka-release",
-		"-rehearsal",
-		"-version=v0.0.0-release-contract",
-		"-source-date-epoch=1788000000",
-		"-output="+outputDir,
-	); runErr != nil {
-		return runErr
-	}
-	entries, err := os.ReadDir(outputDir)
-	if err != nil {
-		return fmt.Errorf("read release contract artifacts: %w", err)
-	}
-	actual := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if entry.IsDir() {
-			return fmt.Errorf("release contract emitted unexpected directory %q", entry.Name())
-		}
-		actual = append(actual, entry.Name())
-	}
-	slices.Sort(actual)
-	expected := []string{
-		"checksums.txt",
-		"starter-kafka_0.0.0-release-contract_sbom.spdx.json",
-		"starter-kafka_0.0.0-release-contract_source.tar.gz",
-	}
-	if !slices.Equal(actual, expected) {
-		return fmt.Errorf("unsigned release rehearsal artifacts = %v; want %v", actual, expected)
-	}
-	return nil
 }
 
 func toolPath(ctx context.Context, root, name string) (string, error) {

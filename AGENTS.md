@@ -26,3 +26,10 @@ starter.
 The product module directly requires the oldest supported Spice core. The
 quality gate verifies that boundary and the explicit current boundary without
 rewriting the repository.
+
+Release-parity work must preserve the exact `spice-dev` tool version authorized
+by the root `go.mod`, invoke its full package path, and run both central and
+retained rehearsals with workspace and network resolution disabled in vendor
+mode. The retained repository builder and signed production workflow remain
+authoritative until a separately reviewed signing migration; unsigned parity
+must never manufacture signatures or key material.

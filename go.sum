@@ -2,6 +2,8 @@ github.com/klauspost/compress v1.18.7 h1:aUyZsS4kH3QTKurYhAOwAHxllVPnOthb3vPfnF1
 github.com/klauspost/compress v1.18.7/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/pierrec/lz4/v4 v4.1.26 h1:GrpZw1gZttORinvzBdXPUXATeqlJjqUG/D87TKMnhjY=
 github.com/pierrec/lz4/v4 v4.1.26/go.mod h1:EoQMVJgeeEOMsCqCzqFm2O0cJvljX2nGZjcRIPL34O4=
+github.com/spice-framework/development v0.0.0-20260806034648-1856466df09d h1:MUguMzdLI5EGpLnvCBtbRf07rG8vubEZ0YQwfWvuvnE=
+github.com/spice-framework/development v0.0.0-20260806034648-1856466df09d/go.mod h1:0lIxjVtv+p4iTrvLJm05OjimS2MSrIqM1xPR7Q0GHEg=
 github.com/spice-framework/spice v0.0.0-20260805175412-383c17744300 h1:cqHN/VvCqhwGqj8kR+2XAev9PVSDOnW7AtkkI88XbwM=
 github.com/spice-framework/spice v0.0.0-20260805175412-383c17744300/go.mod h1:823ZmaopXc+f3ASWbIJL26fEXl1HP7lpyO0x5tE74tE=
 github.com/twmb/franz-go v1.21.0 h1:J3uB/poWgHD6VIilER2uCPFAZHDRXVFT+11pBgRKod4=
