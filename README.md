@@ -85,19 +85,17 @@ failure topology before approving deployment.
 make check
 make compatibility
 make lint
-make release-parity
+make release-rehearsal
 make security
 make verify
 make verify-release
 ```
 
-Release parity runs the exact `spice-dev` tool authorized by `go.mod` and the
-retained repository builder twice each, entirely from `vendor` with network and
-workspace resolution disabled. It compares fully drained archive streams after
-normalizing only the builders' documented root-directory spelling, requires
-equivalent SBOM package and dependency facts, verifies canonical checksum
-files, rejects hidden gzip members or trailing bytes, and forbids rehearsal
-signatures on Windows and Linux.
+Release rehearsal runs the exact `spice-dev` tool authorized by `go.mod`
+twice from one inert plan, entirely from `vendor` with network and workspace
+resolution disabled. It requires byte-identical outputs, canonical checksums,
+central-renderer SPDX provenance, and no rehearsal signatures on Windows and
+Linux.
 
 See [`docs/dependency-review.md`](docs/dependency-review.md) and
 [`docs/support.md`](docs/support.md).
@@ -107,9 +105,10 @@ See [`docs/dependency-review.md`](docs/dependency-review.md) and
 The repository builds deterministic source-only releases with an SPDX 2.3
 SBOM, SHA-256 checksums, and Ed25519 signatures. See the exact artifact and
 clean-tag ceremony in [`docs/releasing.md`](docs/releasing.md).
-The protected central workflow is the release authority. The retained
-repository builder remains only an unsigned parity oracle and is held to the
-dual-builder contract during the migration.
+The protected central workflow is the sole release authority. It validates the
+candidate without credentials, renders and signs with immutable trusted code,
+authenticates the result with an independent verifier, and publishes only after
+separate protected approvals.
 
 ## License
 

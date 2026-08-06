@@ -6,7 +6,7 @@
 - The Spice core minimum and current versions in
   `spice-compatibility.json`.
 - Standard module and vendored, offline builds.
-- Release parity through
+- Release rehearsal through
   `github.com/spice-framework/development/cmd/spice-dev` at
   `v0.0.0-20260806132124-4c308d1b9fda`.
 - Independent verifier:
@@ -41,7 +41,6 @@ production workflow. The reviewed repository-specific trust anchor is
 Its private key exists only as the repository Actions secret
 `SPICE_LIBRARY_RELEASE_SIGNING_KEY`, passed through the caller's exact one-name
 mapping. The protected `release-signing` and `release-publish` environments
-remain approval gates and contain no signing secret. Windows and Linux CI still
-compare unsigned central and retained outputs under vendor-only offline
-resolution; the retained command is only a parity oracle until the first signed
-cutover passes.
+remain approval gates and contain no signing secret. Windows and Linux CI
+render the same inert central plan twice under vendor-only offline resolution
+and require byte-identical unsigned artifacts.

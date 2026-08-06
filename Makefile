@@ -1,4 +1,4 @@
-.PHONY: check compatibility fmt integration lint release-parity security verify verify-release
+.PHONY: check compatibility fmt integration lint release-rehearsal security verify verify-release
 
 check:
 	go run ./internal/qualitygate -mode=check
@@ -15,12 +15,12 @@ integration:
 lint:
 	go run ./internal/qualitygate -mode=lint
 
-release-parity: export GOWORK := off
-release-parity: export GOPROXY := off
-release-parity: export GOTOOLCHAIN := local
-release-parity: export GOFLAGS := -mod=vendor
-release-parity:
-	go run ./internal/qualitygate -mode=release-parity
+release-rehearsal: export GOWORK := off
+release-rehearsal: export GOPROXY := off
+release-rehearsal: export GOTOOLCHAIN := local
+release-rehearsal: export GOFLAGS := -mod=vendor
+release-rehearsal:
+	go run ./internal/qualitygate -mode=release-rehearsal
 
 security:
 	go run ./internal/qualitygate -mode=security

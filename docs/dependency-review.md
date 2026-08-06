@@ -38,7 +38,8 @@ Primary references:
 
 ## Build-only dependencies: Spice release tools
 
-- Decision: approved only as the repository-authorized release-parity tool.
+- Decision: approved as the repository-authorized release signer, renderer,
+  and independent verifier.
 - Signer version: `github.com/spice-framework/development`
   `v0.0.0-20260806132124-4c308d1b9fda`.
 - Signer tool: `github.com/spice-framework/development/cmd/spice-dev` through the
@@ -54,12 +55,17 @@ Primary references:
   selection. That build-time coupling is accepted and visible in `go.mod`,
   `go.sum`, and `vendor/modules.txt`; no parallel tool registry is introduced.
 - Integrity and network behavior: the exact pseudo-version is pinned and
-  checksummed. Release parity runs with `GOWORK=off`, `GOPROXY=off`,
+  checksummed. Release rehearsal runs with `GOWORK=off`, `GOPROXY=off`,
   `GOTOOLCHAIN=local`, and `GOFLAGS=-mod=vendor`, so it cannot select an ambient
   checkout, upgrade itself, or download dependencies.
-- Security: the trusted native tool reads the exact committed Git graph and
-  writes only to caller-supplied temporary output directories. The rehearsal
-  emits no signatures or signing material.
-- Maintenance: the pinned central workflow owns production signing. The retained
-  local builder stays only as a parity oracle until separate removal evidence is
-  reviewed.
+- Security: the trusted native renderer reads the exact committed Git graph
+  and writes only to caller-supplied temporary output directories. The
+  independent verifier authenticates release artifacts against an external
+  trust anchor and exact Git objects. Neither tool generates private material.
+- Maintenance: the protected central workflow is the sole production builder.
+  The caller maps only the repository
+  `SPICE_LIBRARY_RELEASE_SIGNING_KEY` secret; secret inheritance and
+  additional mappings are rejected by repository verification. The protected
+  signing and publishing environments remain approval boundaries. The former
+  repository-local builder was removed after the protected, independently
+  verified central path was established.

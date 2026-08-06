@@ -42,7 +42,7 @@ func execute() int {
 	mode := flag.String(
 		"mode",
 		"verify",
-		"verification mode: check, compatibility, fmt, lint, release-parity, security, verify, or verify-release",
+		"verification mode: check, compatibility, fmt, lint, release-rehearsal, security, verify, or verify-release",
 	)
 	compatibilityLine := flag.String("line", "all", "Spice compatibility line: minimum, current, or all")
 	flag.Parse()
@@ -84,8 +84,8 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
-	release := step{"central and retained release parity", func() error {
-		return releaseParity(ctx, root)
+	release := step{"deterministic central release rehearsal", func() error {
+		return releaseRehearsal(ctx, root)
 	}}
 	var steps []step
 	switch mode {
@@ -108,7 +108,7 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 			formatting,
 			{"lint and nil safety", func() error { return lint(ctx, root) }},
 		}
-	case "release-parity":
+	case "release-rehearsal":
 		steps = []step{identity, release}
 	case "security":
 		steps = []step{
