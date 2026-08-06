@@ -17,7 +17,7 @@ func TestValidateReleaseWorkflow(t *testing.T) {
 			name: "wrong reusable workflow commit",
 			content: strings.Replace(
 				valid,
-				"164e81ea4a31fa124670dc69afaec5bdf5747d78",
+				"f8fe9ec3cedd17f8bec4bf3d40f6640902774124",
 				strings.Repeat("0", 40),
 				1,
 			),
@@ -25,6 +25,18 @@ func TestValidateReleaseWorkflow(t *testing.T) {
 		{
 			name:    "wrong module",
 			content: strings.Replace(valid, modulePath, "github.com/spice-framework/wrong", 1),
+		},
+		{
+			name:    "broad top-level permissions",
+			content: strings.Replace(valid, "permissions: {}", "permissions:\n  contents: write", 1),
+		},
+		{
+			name:    "missing job-local publish permission",
+			content: strings.Replace(valid, "    permissions:\n      contents: write\n", "", 1),
+		},
+		{
+			name:    "forwarded secrets",
+			content: strings.Replace(valid, "    with:\n", "    secrets: inherit\n    with:\n", 1),
 		},
 	}
 	for _, test := range tests {

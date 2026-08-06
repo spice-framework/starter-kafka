@@ -40,11 +40,11 @@ Primary references:
 
 - Decision: approved only as the repository-authorized release-parity tool.
 - Signer version: `github.com/spice-framework/development`
-  `v0.0.0-20260806121906-963bb6676069`.
+  `v0.0.0-20260806132124-4c308d1b9fda`.
 - Signer tool: `github.com/spice-framework/development/cmd/spice-dev` through the
   standard Go `tool` directive; invocations always use the full package path.
 - Verifier version: `github.com/spice-framework/toolchain`
-  `v0.0.0-20260806054457-a83d9b58034c`.
+  `v0.0.0-20260806133530-71211498297c`.
 - Verifier tool:
   `github.com/spice-framework/toolchain/cmd/spice-library-release-verify`.
 - License: Apache-2.0, with its notice retained in `vendor`.

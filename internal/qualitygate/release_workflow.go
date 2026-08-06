@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const reusableReleaseWorkflow = "spice-framework/.github/.github/workflows/library-release.yml@164e81ea4a31fa124670dc69afaec5bdf5747d78"
+const reusableReleaseWorkflow = "spice-framework/.github/.github/workflows/library-release.yml@f8fe9ec3cedd17f8bec4bf3d40f6640902774124"
 
 func checkIdentityAndReleaseWorkflow(ctx context.Context, root string) error {
 	if err := checkIdentity(ctx, root); err != nil {

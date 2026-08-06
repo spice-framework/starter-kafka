@@ -17,7 +17,7 @@ github.com/pierrec/lz4/v4/internal/lz4block
 github.com/pierrec/lz4/v4/internal/lz4errors
 github.com/pierrec/lz4/v4/internal/lz4stream
 github.com/pierrec/lz4/v4/internal/xxh32
-# github.com/spice-framework/development v0.0.0-20260806121906-963bb6676069
+# github.com/spice-framework/development v0.0.0-20260806132124-4c308d1b9fda
 ## explicit; go 1.26.0
 github.com/spice-framework/development/cmd/spice-dev
 github.com/spice-framework/development/internal/bootstrap
@@ -34,7 +34,7 @@ github.com/spice-framework/spice/annotation
 github.com/spice-framework/spice/annotation/sdk/starter
 github.com/spice-framework/spice/lifecycle
 github.com/spice-framework/spice/messaging
-# github.com/spice-framework/toolchain v0.0.0-20260806054457-a83d9b58034c
+# github.com/spice-framework/toolchain v0.0.0-20260806133530-71211498297c
 ## explicit; go 1.26.0
 github.com/spice-framework/toolchain/cmd/spice-library-release-verify
 github.com/spice-framework/toolchain/internal/gitenv

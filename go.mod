@@ -12,8 +12,8 @@ require (
 require (
 	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
-	github.com/spice-framework/development v0.0.0-20260806121906-963bb6676069 // indirect
-	github.com/spice-framework/toolchain v0.0.0-20260806054457-a83d9b58034c // indirect
+	github.com/spice-framework/development v0.0.0-20260806132124-4c308d1b9fda // indirect
+	github.com/spice-framework/toolchain v0.0.0-20260806133530-71211498297c // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.13.1 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
