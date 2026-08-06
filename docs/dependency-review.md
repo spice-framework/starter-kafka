@@ -36,13 +36,17 @@ Primary references:
 - <https://github.com/twmb/franz-go/blob/master/docs/producing-and-consuming.md>
 - <https://github.com/twmb/franz-go/blob/master/LICENSE>
 
-## Build-only dependency: Spice development release renderer
+## Build-only dependencies: Spice release tools
 
 - Decision: approved only as the repository-authorized release-parity tool.
-- Version: `github.com/spice-framework/development`
-  `v0.0.0-20260806034648-1856466df09d`.
-- Tool: `github.com/spice-framework/development/cmd/spice-dev` through the
+- Signer version: `github.com/spice-framework/development`
+  `v0.0.0-20260806052122-9025218a91c0`.
+- Signer tool: `github.com/spice-framework/development/cmd/spice-dev` through the
   standard Go `tool` directive; invocations always use the full package path.
+- Verifier version: `github.com/spice-framework/toolchain`
+  `v0.0.0-20260806054457-a83d9b58034c`.
+- Verifier tool:
+  `github.com/spice-framework/toolchain/cmd/spice-library-release-verify`.
 - License: Apache-2.0, with its notice retained in `vendor`.
 - Runtime scope: none. Product packages do not import the development module,
   and released applications acquire no runtime dependency on it.

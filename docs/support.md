@@ -8,7 +8,10 @@
 - Standard module and vendored, offline builds.
 - Release parity through
   `github.com/spice-framework/development/cmd/spice-dev` at
-  `v0.0.0-20260806034648-1856466df09d`.
+  `v0.0.0-20260806052122-9025218a91c0`.
+- Independent verifier:
+  `github.com/spice-framework/toolchain/cmd/spice-library-release-verify` at
+  `v0.0.0-20260806054457-a83d9b58034c`.
 - Kafka-compatible brokers supported by franz-go v1.21.0, subject to
   application-owned acceptance against the exact broker configuration.
 
