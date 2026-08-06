@@ -8,8 +8,8 @@ github.com/spice-framework/spice v0.0.0-20260805222830-a2ecd56df246 h1:IAPcr8bmw
 github.com/spice-framework/spice v0.0.0-20260805222830-a2ecd56df246/go.mod h1:dBZV5UZcbY6pzhfGNtvAwQIJ8YsFna+jf1SAlmukJfk=
 github.com/spice-framework/toolchain v0.0.0-20260806133530-71211498297c h1:US3ChgXYhIXFZ5VNYQ2BjuiTbStVNEyC1cBjxN3SCXM=
 github.com/spice-framework/toolchain v0.0.0-20260806133530-71211498297c/go.mod h1:/U0xhEiz4xGpiCCS560gjgDiixDh5lR4NXVbVPmrmh8=
-github.com/twmb/franz-go v1.21.0 h1:J3uB/poWgHD6VIilER2uCPFAZHDRXVFT+11pBgRKod4=
-github.com/twmb/franz-go v1.21.0/go.mod h1:1o+jj5oRbItsIMoE+DGpfJIcPcPtDdtkcNFPj4bWNwU=
+github.com/twmb/franz-go v1.21.5 h1:cVYI2+JTTKSvohhy8bCOleYrS7G79ZBrLVFIJsoHm8M=
+github.com/twmb/franz-go v1.21.5/go.mod h1:rfoMTnVk7107fhTGxfEKIHP/e7tPe6oyij/ywzO0czk=
 github.com/twmb/franz-go/pkg/kmsg v1.13.1 h1:fG5kItwysTk5UXqVwb64EpQEy3TydF3vYYK21nUQ+bI=
 github.com/twmb/franz-go/pkg/kmsg v1.13.1/go.mod h1:+DPt4NC8RmI6hqb8G09+3giKObE6uD2Eya6CfqBpeJY=
 golang.org/x/crypto v0.52.0 h1:RMs7fP2rXdep0CftQlK8Uf+kibLm7qkCcradZWYz988=
