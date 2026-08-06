@@ -68,7 +68,9 @@ func run(ctx context.Context, root, mode, compatibilityLine string) error {
 	if runtime.Version() != requiredGoVersion {
 		return fmt.Errorf("go version is %s; require exactly %s", runtime.Version(), requiredGoVersion)
 	}
-	identity := step{"repository identity", func() error { return checkIdentity(ctx, root) }}
+	identity := step{"repository identity and release workflow", func() error {
+		return checkIdentityAndReleaseWorkflow(ctx, root)
+	}}
 	dependencies := step{"dependency and module preparation", func() error {
 		return prepareDependencies(ctx, root)
 	}}

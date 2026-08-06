@@ -1,8 +1,8 @@
 # Releasing starter-kafka
 
-This library owns its release construction. It does not use GoReleaser or a
-second dependency/build graph: `cmd/starter-kafka-release` reads the
-Git-tracked source tree and the committed `go.mod`, `go.sum`, and
+This library owns its release contract. It does not use GoReleaser or a second
+dependency/build graph: the organization-owned reusable workflow and pinned Go
+tools read the Git-tracked source tree and the committed `go.mod`, `go.sum`, and
 `vendor/modules.txt` accepted by repository verification.
 
 ## Artifact contract
@@ -51,8 +51,8 @@ and the retained repository builder twice each with `GOWORK=off`,
 central tool for a read-only plan and then renders the plan without resolving
 an ambient workspace or downloading a module.
 
-The central renderer is the migration candidate. The retained repository
-builder remains both the parity oracle and the production signer:
+The central renderer and signer are the production implementation. The retained
+repository builder remains only an unsigned parity oracle during the migration:
 
 ```text
 make release-parity
@@ -87,22 +87,26 @@ Because both payloads have documented differences, checksum files are not
 expected to be byte-identical. Extra artifacts, signatures, malformed
 checksums, archive entry drift, or undocumented SBOM drift fail closed.
 
-`make verify-release` runs this dual-builder proof. The production tag workflow
-deliberately continues to invoke `cmd/starter-kafka-release`, validate its
-signature and hashes, and publish its signed artifacts until signing authority
-is migrated in a separate review.
+`make verify-release` runs this dual-builder proof. The retained builder is not
+removed by this cutover and never receives production signing authority;
+removal requires a separate reviewed change after the central signed path has
+durable release evidence.
 
 ## Signing and verification
 
-Generate an offline Ed25519 PKCS#8 key and keep it outside the repository:
+Generate a user-owned Ed25519 PKCS#8 key dedicated to this repository and keep
+the private key outside the repository:
 
 ```text
 openssl genpkey -algorithm ED25519 -out starter-kafka-release-key.pem
 ```
 
-The command also accepts a base64-encoded 32-byte Ed25519 seed or 64-byte
-private key. GitHub reads the protected `SPICE_RELEASE_SIGNING_KEY` secret. The
-private key is never copied into source, SBOM, logs, or release output.
+Review and commit the matching public key as
+`security/release/ed25519-public.pem`. Store the private key only as
+`SPICE_LIBRARY_RELEASE_SIGNING_KEY` in the protected `release-signing`
+environment. Configure both `release-signing` and `release-publish` with the
+required human reviewers. The private key is never copied into source, SBOM,
+logs, or release output.
 
 Verify downloaded assets before use:
 
@@ -111,28 +115,26 @@ openssl pkeyutl -verify -pubin -inkey checksums.txt.pem -rawin -in checksums.txt
 sha256sum -c checksums.txt
 ```
 
-The public key is currently distributed beside the signature. That proves the
-checksum file and the published key belong together, but it is not by itself an
-independent identity anchor: an attacker able to replace every release asset
-could replace both. Until a reviewed starter-kafka public-key fingerprint is
-pinned in this repository, authenticity is rooted in the protected GitHub
-repository, exact Git tag, release page, and signing-secret controls. Consumers
-must obtain assets from that channel and must not treat an untrusted mirror plus
-its accompanying key as authenticated. Pinning and publishing the long-lived
-key fingerprint is required before claiming key-rooted authenticity.
+Consumers must authenticate the signature against the reviewed public key from
+the exact tagged source, not against a public key supplied only beside release
+assets. Until that trust anchor and both protected environments are configured,
+this repository must not publish a tag.
 
 PowerShell users can compare the first checksum column with
 `Get-FileHash -Algorithm SHA256` for each named artifact.
 
 ## Release ceremony
 
-1. Run `make verify` once on the final clean commit, then `make verify-release`.
-2. Create and push an annotated canonical `vX.Y.Z` tag.
-3. The tag workflow repeats both gates, derives the epoch from the tag commit,
-   builds and signs the artifacts, verifies signature and hashes, and publishes
-   them with `gh release create`.
-4. Download the published assets and independently verify the signature,
-   checksums, source prefix, and SPDX document.
+1. Confirm the reviewed public anchor, protected `release-signing` secret, and
+   both protected environments exist. Do not proceed if any control is absent.
+2. Run `make verify` once on the final clean commit, then `make verify-release`.
+3. Create and push an annotated canonical `vX.Y.Z` tag.
+4. The caller invokes the organization workflow at its immutable commit and
+   passes only the exact module path; it maps no secrets.
+5. The workflow verifies, signs, independently authenticates, and publishes the
+   artifacts through its separated protected environments.
+6. Download the published assets and independently verify the signature,
+   checksums, source prefix, SPDX document, and reviewed public key.
 
 GitHub is the distribution mirror; the same repository command constructs
 identical artifacts offline on Windows, Linux, and macOS.

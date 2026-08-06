@@ -60,6 +60,6 @@ Primary references:
 - Security: the trusted native tool reads the exact committed Git graph and
   writes only to caller-supplied temporary output directories. The rehearsal
   emits no signatures or signing material.
-- Maintenance: the retained local builder and production signing workflow stay
-  in place. A dual-builder gate detects central renderer regressions before any
-  future authority migration.
+- Maintenance: the pinned central workflow owns production signing. The retained
+  local builder stays only as a parity oracle until separate removal evidence is
+  reviewed.

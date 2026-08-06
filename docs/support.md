@@ -34,6 +34,10 @@ backoff, tracing hooks, and operational monitoring. This starter owns secure
 client defaults, bounded synchronous production, sequential consumption,
 manual settlement, lifecycle cleanup, and payload-free interaction metadata.
 
-The pinned central tool renders unsigned rehearsal candidates only. Windows
-and Linux CI compare them with the retained builder under vendor-only offline
-resolution; the retained command remains the signed production authority.
+The pinned central signer and independent verifier power the protected reusable
+production workflow. Windows and Linux CI still compare unsigned central and
+retained outputs under vendor-only offline resolution; the retained command is
+only a parity oracle. Production remains disabled until a reviewed
+`security/release/ed25519-public.pem`, the per-repository
+`SPICE_LIBRARY_RELEASE_SIGNING_KEY`, and protected `release-signing` and
+`release-publish` environments are configured.
