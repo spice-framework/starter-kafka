@@ -102,7 +102,10 @@ openssl genpkey -algorithm ED25519 -out starter-kafka-release-key.pem
 ```
 
 Review and commit the matching public key as
-`security/release/ed25519-public.pem`. Store the private key only as
+`security/release/ed25519-public.pem`. Its reviewed SHA-256 public-key
+fingerprint is
+`f6af46e24ee66eafb0ef831f638103a2af8a43f9fe7c7a939f1495d2db70f606`.
+Store the private key only as
 `SPICE_LIBRARY_RELEASE_SIGNING_KEY` in the protected `release-signing`
 environment. Configure both `release-signing` and `release-publish` with the
 required human reviewers. The private key is never copied into source, SBOM,
@@ -117,8 +120,8 @@ sha256sum -c checksums.txt
 
 Consumers must authenticate the signature against the reviewed public key from
 the exact tagged source, not against a public key supplied only beside release
-assets. Until that trust anchor and both protected environments are configured,
-this repository must not publish a tag.
+assets. Publishing remains fail-closed if the anchor, signing secret, protected
+environments, or immutable tag rules are absent.
 
 PowerShell users can compare the first checksum column with
 `Get-FileHash -Algorithm SHA256` for each named artifact.

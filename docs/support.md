@@ -35,9 +35,10 @@ client defaults, bounded synchronous production, sequential consumption,
 manual settlement, lifecycle cleanup, and payload-free interaction metadata.
 
 The pinned central signer and independent verifier power the protected reusable
-production workflow. Windows and Linux CI still compare unsigned central and
-retained outputs under vendor-only offline resolution; the retained command is
-only a parity oracle. Production remains disabled until a reviewed
-`security/release/ed25519-public.pem`, the per-repository
-`SPICE_LIBRARY_RELEASE_SIGNING_KEY`, and protected `release-signing` and
-`release-publish` environments are configured.
+production workflow. The reviewed repository-specific trust anchor is
+`security/release/ed25519-public.pem` (SHA-256 fingerprint
+`f6af46e24ee66eafb0ef831f638103a2af8a43f9fe7c7a939f1495d2db70f606`).
+Its private key exists only in the protected `release-signing` environment;
+`release-publish` contains no signing secret. Windows and Linux CI still compare
+unsigned central and retained outputs under vendor-only offline resolution; the
+retained command is only a parity oracle until the first signed cutover passes.
