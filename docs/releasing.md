@@ -104,12 +104,13 @@ openssl genpkey -algorithm ED25519 -out starter-kafka-release-key.pem
 Review and commit the matching public key as
 `security/release/ed25519-public.pem`. Its reviewed SHA-256 public-key
 fingerprint is
-`f6af46e24ee66eafb0ef831f638103a2af8a43f9fe7c7a939f1495d2db70f606`.
-Store the private key only as
-`SPICE_LIBRARY_RELEASE_SIGNING_KEY` in the protected `release-signing`
-environment. Configure both `release-signing` and `release-publish` with the
-required human reviewers. The private key is never copied into source, SBOM,
-logs, or release output.
+`54e8eabf2130a73b889dad1681cc097bdf8fc2be8d0af8645810a3b4e3159196`.
+Store the private key only as the repository Actions secret
+`SPICE_LIBRARY_RELEASE_SIGNING_KEY` and map only that named secret into the
+reusable workflow. Configure both `release-signing` and `release-publish` with
+the required human reviewers; the environments are approval gates and contain
+no private key. The key is never copied into source, SBOM, logs, or release
+output, and callers never use `secrets: inherit`.
 
 Verify downloaded assets before use:
 
@@ -128,12 +129,13 @@ PowerShell users can compare the first checksum column with
 
 ## Release ceremony
 
-1. Confirm the reviewed public anchor, protected `release-signing` secret, and
-   both protected environments exist. Do not proceed if any control is absent.
+1. Confirm the reviewed public anchor, repository signing secret, exact caller
+   mapping, and both protected environments exist. Do not proceed if any
+   control is absent.
 2. Run `make verify` once on the final clean commit, then `make verify-release`.
 3. Create and push an annotated canonical `vX.Y.Z` tag.
-4. The caller invokes the organization workflow at its immutable commit and
-   passes only the exact module path; it maps no secrets.
+4. The caller invokes the organization workflow at its immutable commit, passes
+   the exact module path, and maps only `SPICE_LIBRARY_RELEASE_SIGNING_KEY`.
 5. The workflow verifies, signs, independently authenticates, and publishes the
    artifacts through its separated protected environments.
 6. Download the published assets and independently verify the signature,

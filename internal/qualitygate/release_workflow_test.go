@@ -17,7 +17,7 @@ func TestValidateReleaseWorkflow(t *testing.T) {
 			name: "wrong reusable workflow commit",
 			content: strings.Replace(
 				valid,
-				"f8fe9ec3cedd17f8bec4bf3d40f6640902774124",
+				"37dbac1ce9a616574f899afcb531f2097c71855c",
 				strings.Repeat("0", 40),
 				1,
 			),
@@ -35,8 +35,16 @@ func TestValidateReleaseWorkflow(t *testing.T) {
 			content: strings.Replace(valid, "    permissions:\n      contents: write\n", "", 1),
 		},
 		{
-			name:    "forwarded secrets",
-			content: strings.Replace(valid, "    with:\n", "    secrets: inherit\n    with:\n", 1),
+			name:    "missing named signing secret",
+			content: strings.Replace(valid, "    secrets:\n      SPICE_LIBRARY_RELEASE_SIGNING_KEY: ${{ secrets.SPICE_LIBRARY_RELEASE_SIGNING_KEY }}\n", "", 1),
+		},
+		{
+			name:    "inherited unrelated secrets",
+			content: strings.Replace(valid, "    secrets:\n      SPICE_LIBRARY_RELEASE_SIGNING_KEY: ${{ secrets.SPICE_LIBRARY_RELEASE_SIGNING_KEY }}", "    secrets: inherit", 1),
+		},
+		{
+			name:    "wrong signing secret",
+			content: strings.Replace(valid, "secrets.SPICE_LIBRARY_RELEASE_SIGNING_KEY", "secrets.WRONG", 1),
 		},
 	}
 	for _, test := range tests {
