@@ -8,7 +8,7 @@
 - Standard module and vendored, offline builds.
 - Release parity through
   `github.com/spice-framework/development/cmd/spice-dev` at
-  `v0.0.0-20260806052122-9025218a91c0`.
+  `v0.0.0-20260806121906-963bb6676069`.
 - Independent verifier:
   `github.com/spice-framework/toolchain/cmd/spice-library-release-verify` at
   `v0.0.0-20260806054457-a83d9b58034c`.
