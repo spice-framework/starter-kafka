@@ -1,5 +1,7 @@
 # Spice Kafka Starter
 
+Unified documentation: [spiceframework.dev/integrations/kafka](https://spiceframework.dev/integrations/kafka/).
+
 `starter-kafka` provides a synchronous idempotent Kafka producer and a bounded,
 sequential consumer group for Spice applications. Both are ordinary Go values
 with explicit construction and cleanup; there is no global client, reflection,
