@@ -39,7 +39,7 @@ github.com/spice-framework/spice/messaging
 github.com/spice-framework/toolchain/cmd/spice-library-release-verify
 github.com/spice-framework/toolchain/internal/gitenv
 github.com/spice-framework/toolchain/internal/libraryreleaseverify
-# github.com/twmb/franz-go v1.21.0
+# github.com/twmb/franz-go v1.21.6
 ## explicit; go 1.25.0
 github.com/twmb/franz-go/pkg/kbin
 github.com/twmb/franz-go/pkg/kerr
@@ -54,9 +54,6 @@ github.com/twmb/franz-go/pkg/sasl/scram
 ## explicit; go 1.24.0
 github.com/twmb/franz-go/pkg/kmsg
 github.com/twmb/franz-go/pkg/kmsg/internal/kbin
-# golang.org/x/crypto v0.52.0
-## explicit; go 1.25.0
-golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.38.0
 ## explicit; go 1.25.0
 golang.org/x/mod/internal/lazyregexp

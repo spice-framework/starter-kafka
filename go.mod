@@ -6,7 +6,7 @@ toolchain go1.26.5
 
 require (
 	github.com/spice-framework/spice v0.0.0-20260805222830-a2ecd56df246
-	github.com/twmb/franz-go v1.21.0
+	github.com/twmb/franz-go v1.21.6
 )
 
 require (
@@ -15,7 +15,6 @@ require (
 	github.com/spice-framework/development v0.0.0-20260806132124-4c308d1b9fda // indirect
 	github.com/spice-framework/toolchain v0.0.0-20260806133530-71211498297c // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.13.1 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 )
 
